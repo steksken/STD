@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCV Denderleeuw - Kantine TV</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
     <style>
         :root {
             --dender-blauw: #0055a4;
@@ -24,7 +24,7 @@
             font-family: var(--font);
             overflow: hidden; 
             display: grid;
-            grid-template-rows: 1fr 70px; /* Ruimte voor de sponsorbalk */
+            grid-template-rows: 1fr 70px; 
             height: 100vh;
         }
 
@@ -38,16 +38,14 @@
             overflow: hidden;
         }
 
-        /* Programma Sectie Links */
         .main-panel { 
             background: var(--bg); 
             padding: 25px; 
             border-radius: var(--card-radius); 
             border-top: 8px solid var(--dender-blauw);
-            overflow-y: auto; /* Scrollen toestaan voor lange lijsten */
+            overflow-y: auto;
         }
         
-        /* Verberg scrollbar voor een strakke TV-look */
         .main-panel::-webkit-scrollbar { display: none; }
 
         h1 { font-size: 2.2rem; margin-top: 0; text-transform: uppercase; border-bottom: 2px solid #333; padding-bottom: 10px; }
@@ -65,12 +63,10 @@
         }
         .time { color: var(--accent); font-weight: bold; font-size: 1.5rem; min-width: 80px; }
         .team { font-size: 1.3rem; font-weight: 600; flex-grow: 1; padding-left: 15px; }
-        .loc { background: var(--dender-blauw); padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 1rem; white-space: nowrap; }
+        .loc { background: var(--dender-blauw); padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 1rem; }
 
-        /* Rechter Kolom */
         .side-panel { display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
 
-        /* Time/Weather Card */
         .wc-card {
             display: flex;
             align-items: center;
@@ -90,17 +86,9 @@
         .wc-temp { font-size: 28px; font-weight: 700; }
         .wc-desc { font-size: 13px; color: var(--muted); }
 
-        /* Mededelingen Box */
-        .info-box {
-            background: var(--bg);
-            padding: 20px;
-            border-radius: var(--card-radius);
-            flex-grow: 1;
-        }
+        .info-box { background: var(--bg); padding: 20px; border-radius: var(--card-radius); flex-grow: 1; }
         .info-box h3 { color: var(--dender-blauw); margin-top: 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .news-content { font-size: 1.2rem; line-height: 1.5; color: #eee; }
 
-        /* Sponsor Balk */
         .sponsor-footer { background: white; color: black; padding: 12px; font-size: 1.5rem; font-weight: bold; white-space: nowrap; overflow: hidden; border-top: 5px solid var(--dender-blauw); }
         .marquee { display: inline-block; animation: scroll 35s linear infinite; padding-left: 100%; }
         @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
@@ -111,7 +99,7 @@
     <div class="layout-grid">
         <div class="main-panel">
             <h1>Club Planning</h1>
-            <div id="events-container">Laden van ProSoccerData...</div>
+            <div id="events-container">Bezig met laden...</div>
         </div>
 
         <div class="side-panel">
@@ -133,14 +121,88 @@
 
             <div class="info-box">
                 <h3>Mededelingen</h3>
-                <div class="news-content">
-                    <marquee direction="up" scrollamount="2" height="300px">
-                        <p>• Welkom bij FCV Denderleeuw!</p>
-                        <p>• Vergeet niet je aanwezigheid te bevestigen in de PSD app.</p>
-                        <p>• Respecteer de kleedkamers en laat ze proper achter.</p>
-                        <p>• Interesse in een vrijwilligersrol? Spreek ons aan bij de bar!</p>
-                    </marquee>
-                </div>
+                <marquee direction="up" scrollamount="2" height="300px" style="font-size: 1.2rem;">
+                    <p>• Welkom bij FCV Denderleeuw!</p>
+                    <p>• Respecteer de kleedkamers.</p>
+                    <p>• Mosselavond inschrijvingen geopend!</p>
+                </marquee>
             </div>
         </div>
     </div>
+
+    <div class="sponsor-footer">
+        <div class="marquee">
+            BEDANKT AAN ONZE SPONSORS: &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp; CAFE DE SPORTWERELD &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp; SLAGERIJ BART & ANN &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp; GARAGE DENDERLEEUW
+        </div>
+    </div>
+
+    <script>
+        // --- WEER & TIJD ---
+        function updateClock() {
+            const now = new Date();
+            const fmt = new Intl.DateTimeFormat('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Brussels', hour12: false });
+            document.getElementById('wc-time').textContent = fmt.format(now);
+        }
+        async function fetchWeather() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=50.89&longitude=4.05&current_weather=true`);
+                const json = await res.json();
+                const mapping = { 0: ['Helder', '☀️'], 1: ['Licht bewolkt', '🌤️'], 2: ['Half bewolkt', '⛅'], 3: ['Bewolkt', '☁️'], 45: ['Mist', '🌫️'], 61: ['Regen', '🌧️'], 95: ['Onweer', '⛈️'] };
+                const [desc, emoji] = mapping[json.current_weather.weathercode] || ['Bewolkt', '☁️'];
+                document.getElementById('wc-icon').textContent = emoji;
+                document.getElementById('wc-temp').textContent = `${Math.round(json.current_weather.temperature)}°C`;
+                document.getElementById('wc-desc').textContent = desc;
+            } catch (e) {}
+        }
+        setInterval(updateClock, 1000); updateClock(); fetchWeather(); setInterval(fetchWeather, 600000);
+
+        // --- PSD PLANNING ---
+        async function loadCalendar() {
+            const container = document.getElementById('events-container');
+            // Check of ICAL geladen is
+            if (typeof ICAL === 'undefined') {
+                container.innerHTML = "Laden van componenten...";
+                setTimeout(loadCalendar, 1000);
+                return;
+            }
+
+            try {
+                const psdUrl = 'https://denderleeuw.prosoccerdata.com/api/v2/members/ics/file?id=943&uuid=11ffb49b-2197-11ea-8e99-5e16215dd2d6';
+                const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(psdUrl));
+                const json = await response.json();
+                const jcalData = ICAL.parse(json.contents);
+                const comp = new ICAL.Component(jcalData);
+                const vevents = comp.getAllSubcomponents('vevent');
+                
+                container.innerHTML = '';
+                const datesToShow = [];
+                for(let i = 0; i < 3; i++) {
+                    const d = new Date(); d.setDate(d.getDate() + i);
+                    datesToShow.push(d.toDateString());
+                }
+
+                datesToShow.forEach(dateStr => {
+                    const d = new Date(dateStr);
+                    container.innerHTML += `<h2>${d.toLocaleDateString('nl-BE', {weekday: 'long', day: 'numeric', month: 'short'})}</h2>`;
+                    
+                    let hasEvents = false;
+                    vevents.forEach(vevent => {
+                        const event = new ICAL.Event(vevent);
+                        if(event.startDate.toJSDate().toDateString() === dateStr) {
+                            hasEvents = true;
+                            container.innerHTML += `
+                                <div class="event-card">
+                                    <div class="time">${event.startDate.toJSDate().toLocaleTimeString('nl-BE', {hour:'2-digit', minute:'2-digit'})}</div>
+                                    <div class="team">${event.summary}</div>
+                                    <div class="loc">${event.location || 'Kantine'}</div>
+                                </div>`;
+                        }
+                    });
+                    if(!hasEvents) container.innerHTML += `<p style="color:#666; padding-left:15px;">Geen activiteiten</p>`;
+                });
+            } catch (e) { container.innerHTML = "Planning tijdelijk niet beschikbaar."; }
+        }
+        loadCalendar(); setInterval(loadCalendar, 600000);
+    </script>
+</body>
+</html>
