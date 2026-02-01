@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCV Denderleeuw - Kantine TV</title>
+    <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
+    <style>
+        :root {
+            --dender-blauw: #0055a4;
+            --dender-zwart: #1a1a1a;
+            --accent-geel: #f1c40f; /* Voor uitschieters/kleedkamers */
+        }
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background-color: var(--dender-zwart); 
+            color: white; 
+            margin: 0; 
+            overflow: hidden; 
+            display: grid;
+            grid-template-columns: 70% 30%;
+            height: 100vh;
+        }
+        
+        /* Links: Programma */
+        .main-panel { padding: 40px; background: linear-gradient(135deg, #1a1a1a 0%, #002d57 100%); }
+        h1 { font-size: 3rem; border-bottom: 5px solid var(--dender-blauw); margin-bottom: 30px; text-transform: uppercase; }
+        .event-card {
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 10px solid var(--dender-blauw);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.5rem;
+        }
+        .time { color: var(--accent-geel); font-weight: bold; min-width: 120px; }
+        .team { font-weight: bold; flex-grow: 1; margin-left: 20px; }
+        .location { background: var(--dender-blauw); padding: 5px 15px; border-radius: 5px; font-size: 1.2rem; }
+
+        /* Rechts: Info & Klok */
+        .side-panel { background: var(--dender-zwart); border-left: 2px solid #333; padding: 20px; display: flex; flex-direction: column; }
+        .clock-box { text-align: center; padding: 20px; background: #222; border-radius: 15px; margin-bottom: 20px; }
+        #clock { font-size: 5rem; font-weight: bold; color: white; }
+        #date { font-size: 1.5rem; color: #888; }
+        
+        .news-box { flex-grow: 1; background: #222; border-radius: 15px; padding: 20px; position: relative; }
+        h3 { color: var(--dender-blauw); text-transform: uppercase; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .scrolling-news { font-size: 1.3rem; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+    <div class="main-panel">
+        <h1>Programma Vandaag</h1>
+        <div id="events-container">
+            <p>Laden van de PSD planning...</p>
+        </div>
+    </div>
+
+    <div class="side-panel">
+        <div class="clock-box">
+            <div id="clock">00:00</div>
+            <div id="date">Datum laden...</div>
+        </div>
+
+        <div class="news-box">
+            <h3>Clubnieuws</h3>
+            <div class="scrolling-news">
+                <marquee direction="up" scrollamount="3" height="400px">
+                    <p>• Welkom bij FCV Denderleeuw!</p>
+                    <p>• Respecteer de kleedkamers en de scheidsrechter.</p>
+                    <p>• Volgende mosselavond: Zie website.</p>
+                    <p>• Nieuwe vrijwilligers voor de bar zijn altijd welkom.</p>
+                </marquee>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('nl-BE', {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('date').textContent = now.toLocaleDateString('nl-BE', {weekday: 'long', day: 'numeric', month: 'long'});
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const icalUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://denderleeuw.prosoccerdata.com/api/v2/members/ics/file?id=943&uuid=11ffb49b-2197-11ea-8e99-5e16215dd2d6');
+
+        async function fetchCalendar() {
+            try {
+                const response = await fetch(icalUrl);
+                const data = await response.text();
+                const jcalData = ICAL.parse(data);
+                const comp = new ICAL.Component(jcalData);
+                const events = comp.getAllSubcomponents('vevent');
+                
+                const container = document.getElementById('events-container');
+                container.innerHTML = '';
+
+                const today = new Date().toISOString().split('T')[0];
+
+                let hasEvents = false;
+                events.forEach(event => {
+                    const summary = event.getFirstPropertyValue('summary');
+                    const dtstart = event.getFirstPropertyValue('dtstart').toJSDate();
+                    const location = event.getFirstPropertyValue('location') || "N.v.t.";
+                    
+                    const eventDate = dtstart.toISOString().split('T')[0];
+
+                    if (eventDate === today) {
+                        hasEvents = true;
+                        const timeStr = dtstart.toLocaleTimeString('nl-BE', {hour: '2-digit', minute: '2-digit'});
+                        container.innerHTML += `
+                            <div class="event-card">
+                                <span class="time">${timeStr}</span>
+                                <span class="team">${summary}</span>
+                                <span class="location">${location}</span>
+                            </div>
+                        `;
+                    }
+                });
+
+                if (!hasEvents) {
+                    container.innerHTML = '<p style="font-size: 1.5rem;">Geen trainingen of wedstrijden gepland voor vandaag.</p>';
+                }
+            } catch (error) {
+                console.error('Fout bij laden PSD:', error);
+                document.getElementById('events-container').innerHTML = 'Fout bij laden van de planning. Controleer de internetverbinding.';
+            }
+        }
+
+        fetchCalendar();
+        setInterval(fetchCalendar, 300000); // Ververs elke 5 minuten
+    </script>
+</body>
+</html>
