@@ -2,118 +2,145 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>FCV Denderleeuw TV</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCV Denderleeuw - Kantine TV</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.5.0/ical.min.js"></script>
     <style>
-        :root { --dender-blauw: #0055a4; --dender-zwart: #121212; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--dender-zwart); color: white; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-        
-        .container { display: grid; grid-template-columns: 65% 35%; flex-grow: 1; padding: 20px; gap: 20px; }
-        
-        /* Programma */
-        .main-panel { background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; border-top: 8px solid var(--dender-blauw); }
-        h1 { margin-top: 0; font-size: 2.5rem; text-transform: uppercase; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .event-card { background: #1e1e1e; margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; align-items: center; border-left: 5px solid var(--dender-blauw); }
-        .time { color: #f1c40f; font-weight: bold; font-size: 1.5rem; min-width: 90px; }
-        .team { font-size: 1.4rem; flex-grow: 1; padding-left: 20px; }
-        .loc { background: var(--dender-blauw); padding: 5px 15px; border-radius: 4px; font-weight: bold; }
+        :root {
+            --dender-blauw: #0055a4;
+            --dender-zwart: #121212;
+            --bg: rgba(255, 255, 255, 0.05);
+            --card-radius: 15px;
+            --accent: #ffd166;
+            --text: #ffffff;
+            --muted: #e9e9e9aa;
+            --font: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+        }
 
-        /* Zijpaneel */
-        .side-panel { display: flex; flex-direction: column; gap: 20px; }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; text-align: center; }
-        #clock { font-size: 4.5rem; font-weight: bold; line-height: 1; }
-        #date { color: #888; font-size: 1.2rem; margin-top: 10px; text-transform: capitalize; }
-        
-        /* Weer: iframe methode is betrouwbaarder voor GitHub */
-        .weather-container { height: 250px; border-radius: 15px; overflow: hidden; background: #fff; }
+        body { 
+            background-color: var(--dender-zwart); 
+            color: white; 
+            margin: 0; 
+            font-family: var(--font);
+            overflow: hidden; 
+            display: grid;
+            grid-template-rows: 1fr 70px; /* Ruimte voor de sponsorbalk */
+            height: 100vh;
+        }
 
-        /* Sponsoren */
-        .sponsor-footer { background: white; color: black; padding: 15px; font-size: 1.8rem; font-weight: bold; white-space: nowrap; overflow: hidden; border-top: 6px solid var(--dender-blauw); }
-        .marquee { display: inline-block; animation: scroll 25s linear infinite; padding-left: 100%; }
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 65% 35%;
+            height: 100%;
+            padding: 20px;
+            gap: 20px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* Programma Sectie Links */
+        .main-panel { 
+            background: var(--bg); 
+            padding: 25px; 
+            border-radius: var(--card-radius); 
+            border-top: 8px solid var(--dender-blauw);
+            overflow-y: auto; /* Scrollen toestaan voor lange lijsten */
+        }
+        
+        /* Verberg scrollbar voor een strakke TV-look */
+        .main-panel::-webkit-scrollbar { display: none; }
+
+        h1 { font-size: 2.2rem; margin-top: 0; text-transform: uppercase; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        h2 { color: var(--dender-blauw); font-size: 1.4rem; margin-top: 25px; border-bottom: 1px solid #333; text-transform: capitalize; }
+        
+        .event-card {
+            background: rgba(255, 255, 255, 0.08);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 8px solid var(--dender-blauw);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .time { color: var(--accent); font-weight: bold; font-size: 1.5rem; min-width: 80px; }
+        .team { font-size: 1.3rem; font-weight: 600; flex-grow: 1; padding-left: 15px; }
+        .loc { background: var(--dender-blauw); padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 1rem; white-space: nowrap; }
+
+        /* Rechter Kolom */
+        .side-panel { display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
+
+        /* Time/Weather Card */
+        .wc-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-radius: var(--card-radius);
+            background: var(--bg);
+            color: var(--text);
+            backdrop-filter: blur(6px);
+        }
+        .wc-left { display: flex; flex-direction: column; }
+        .wc-time { font-size: 38px; font-weight: 700; line-height: 1; }
+        .wc-tz { font-size: 12px; color: var(--muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .wc-right { display: flex; flex-direction: column; align-items: flex-end; }
+        .wc-weather { display: flex; align-items: center; gap: 8px; }
+        .wc-icon { font-size: 35px; }
+        .wc-temp { font-size: 28px; font-weight: 700; }
+        .wc-desc { font-size: 13px; color: var(--muted); }
+
+        /* Mededelingen Box */
+        .info-box {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: var(--card-radius);
+            flex-grow: 1;
+        }
+        .info-box h3 { color: var(--dender-blauw); margin-top: 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .news-content { font-size: 1.2rem; line-height: 1.5; color: #eee; }
+
+        /* Sponsor Balk */
+        .sponsor-footer { background: white; color: black; padding: 12px; font-size: 1.5rem; font-weight: bold; white-space: nowrap; overflow: hidden; border-top: 5px solid var(--dender-blauw); }
+        .marquee { display: inline-block; animation: scroll 35s linear infinite; padding-left: 100%; }
         @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="layout-grid">
         <div class="main-panel">
-            <h1>Programma Vandaag</h1>
-            <div id="events-container">Agenda aan het ophalen...</div>
+            <h1>Club Planning</h1>
+            <div id="events-container">Laden van ProSoccerData...</div>
         </div>
 
         <div class="side-panel">
-            <div class="box">
-                <div id="clock">00:00</div>
-                <div id="date">Datum laden...</div>
+            <div id="wc" class="wc-card">
+                <div class="wc-left">
+                    <div class="wc-time" id="wc-time">--:--</div>
+                    <div class="wc-tz">9470 Denderleeuw</div>
+                </div>
+                <div class="wc-right">
+                    <div class="wc-weather">
+                        <div class="wc-icon" id="wc-icon">⌛</div>
+                        <div>
+                            <div class="wc-temp" id="wc-temp">--°C</div>
+                            <div class="wc-desc" id="wc-desc">Laden…</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="box" style="padding:0; overflow:hidden; height:260px;">
-                <iframe src="https://gadgets.buienradar.nl/gadget/zoommap/?lat=50.89&lng=4.07&overname=2&zoom=8&naam=denderleeuw&size=2&voorpseld=1" scrolling="no" width="100%" height="260" frameborder="no"></iframe>
-            </div>
-
-            <div class="box" style="flex-grow: 1; text-align: left;">
-                <h3 style="color: var(--dender-blauw); margin:0 0 10px 0;">MEDEDELINGEN</h3>
-                <p>• Welkom bij FCV Denderleeuw</p>
-                <p>• Respecteer de kleedkamers</p>
+            <div class="info-box">
+                <h3>Mededelingen</h3>
+                <div class="news-content">
+                    <marquee direction="up" scrollamount="2" height="300px">
+                        <p>• Welkom bij FCV Denderleeuw!</p>
+                        <p>• Vergeet niet je aanwezigheid te bevestigen in de PSD app.</p>
+                        <p>• Respecteer de kleedkamers en laat ze proper achter.</p>
+                        <p>• Interesse in een vrijwilligersrol? Spreek ons aan bij de bar!</p>
+                    </marquee>
+                </div>
             </div>
         </div>
     </div>
-
-    <div class="sponsor-footer">
-        <div class="marquee">
-            SPONSOR: CAFE DE SPORTWERELD &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp; SLAGERIJ BART & ANN &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp; GARAGE DENDERLEEUW &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp; BEDANKT VOOR UW STEUN!
-        </div>
-    </div>
-
-    <script>
-        function updateClock() {
-            const nu = new Date();
-            document.getElementById('clock').textContent = nu.toLocaleTimeString('nl-BE', {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('date').textContent = nu.toLocaleDateString('nl-BE', {weekday: 'long', day: 'numeric', month: 'long'});
-        }
-        setInterval(updateClock, 1000); updateClock();
-
-        // We gebruiken een publieke proxy om de PSD link te kunnen lezen
-        const psdUrl = 'https://denderleeuw.prosoccerdata.com/api/v2/members/ics/file?id=943&uuid=11ffb49b-2197-11ea-8e99-5e16215dd2d6';
-        const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(psdUrl);
-
-        async function loadCalendar() {
-            try {
-                const response = await fetch(proxy);
-                const json = await response.json();
-                const jcalData = ICAL.parse(json.contents);
-                const comp = new ICAL.Component(jcalData);
-                const vevents = comp.getAllSubcomponents('vevent');
-                
-                const container = document.getElementById('events-container');
-                container.innerHTML = '';
-                
-                const todayStr = new Date().toDateString();
-                let count = 0;
-
-                vevents.forEach(vevent => {
-                    const event = new ICAL.Event(vevent);
-                    if(event.startDate.toJSDate().toDateString() === todayStr) {
-                        count++;
-                        const time = event.startDate.toJSDate().toLocaleTimeString('nl-BE', {hour:'2-digit', minute:'2-digit'});
-                        container.innerHTML += `
-                            <div class="event-card">
-                                <div class="time">${time}</div>
-                                <div class="team">${event.summary}</div>
-                                <div class="loc">${event.location || 'TBD'}</div>
-                            </div>
-                        `;
-                    }
-                });
-
-                if(count === 0) container.innerHTML = "<h3>Geen activiteiten voor vandaag.</h3>";
-            } catch (e) {
-                console.error(e);
-                document.getElementById('events-container').innerHTML = "Agenda momenteel niet beschikbaar.";
-            }
-        }
-        loadCalendar();
-        setInterval(loadCalendar, 600000); // Elke 10 min verversen
-    </script>
-</body>
-</html>
